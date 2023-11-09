@@ -77,8 +77,8 @@ def calc_LWx(ra:np.ndarray, dec:np.ndarray, localiz:dict, debug=False):
         y_box = sep_box.value * np.cos(new_pa_box).value
 
         # Calculate
-        L_wx = np.exp(-x_box ** 2 / (2 * eellipse['a'] ** 2)) * np.exp(-y_box ** 2 / (2 * eellipse['b'] ** 2)) /
-             (2*np.pi*eellipse['a']*eellipse['b'])
+        L_wx = np.exp(-x_box ** 2 / (2 * eellipse['a'] ** 2)) * np.exp(
+                -y_box ** 2 / (2 * eellipse['b'] ** 2)) / (2*np.pi*eellipse['a']*eellipse['b'])
 
         if debug:
             print('>>>>>> eellipse', eellipse['a'], eellipse['b'])
