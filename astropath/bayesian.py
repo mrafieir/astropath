@@ -8,11 +8,12 @@ from astropy import units
 from astropath import localization 
 
 from IPython import embed
+from scipy.integrate import simps
 
 sqarcsec_steradians = 4 * np.pi * (1 / 3600 / 3600) / (180. / np.pi) ** 2
 
 
-def pw_Oi(theta, phi, theta_prior):
+def pw_Oi(theta, phi, theta_prior, debug=False):
     """
     Calculate p(w|O_i) for a given galaxy
 
@@ -34,6 +35,10 @@ def pw_Oi(theta, phi, theta_prior):
     """
     p = np.zeros_like(theta)
     ok_w = theta < theta_prior['max']*phi
+
+    if debug:
+        print('>>> ok_w', np.any(ok_w))
+
     if theta_prior['PDF'] == 'core':
         # Wolfram
         # Updated by JXP on 14-Feb-2023
@@ -60,6 +65,11 @@ def pw_Oi(theta, phi, theta_prior):
     #
     if norm == 0:
         raise ValueError("You forgot to normalize!")
+
+    if debug:
+        print('>>>> p[ok_w], norm = ', p[ok_w], norm)
+        print('>>> +/-', np.sum(p[p > 0]), np.sum(p[p < 0]))
+
     # Return
     return p
 
@@ -151,7 +161,7 @@ def px_Oi_fixedgrid(box_hwidth, localiz, cand_coords,
         return np.array(p_xOis)
 
 def px_Oi_local(localiz, cand_coords, cand_ang_size,
-                theta_prior, step_size=0.1, debug = False):
+                theta_prior, step_size=0.1, debug=False):
     """
     Perform the calculation on local grids, one
     per candidate.  This is likely slower than 
@@ -197,6 +207,8 @@ def px_Oi_local(localiz, cand_coords, cand_ang_size,
         theta = np.sqrt(xcoord**2 + ycoord**2)
         # p(w|O)
         p_wOi = pw_Oi(theta, phi_cand, theta_prior)
+        if debug:
+            print('>>> p_wOi', np.any(p_wOi))
 
         # Generate coords for transient localiation (flat sky)
         ra = cand_coord.ra.deg + \
@@ -209,6 +221,14 @@ def px_Oi_local(localiz, cand_coords, cand_ang_size,
         # Finish
         grid_p = L_wx * p_wOi
         #
+        if debug:
+            print('>>>>',
+                step_size_phi**2,
+                np.sum(L_wx),
+                np.sum(p_wOi),
+                np.sum(grid_p)*step_size_phi**2,
+                simps(simps(grid_p, x),x))
+
         p_xOis.append(np.sum(grid_p)*step_size_phi**2)
         # Debug
         if debug:
